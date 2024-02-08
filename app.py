@@ -47,8 +47,8 @@ def homepage():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/start<br/>"
-        f"/api/v1.0/start/end"
+        f"Enter desired start date for 'start' in mm-dd-yyyy format: /api/v1.0/start<br/>"
+        f"Enter desired start and end dates for 'start' and 'end', respectively in mm-dd-yyyy format: /api/v1.0/start/end"
     )
 
 # precipitation
@@ -61,13 +61,6 @@ def precipitation():
         filter(measurement.date > year_ago).\
         order_by(measurement.date).all()
     session.close()
-
-    # precip = []
-    # for prcp, date in precip:
-    #     precipitation_dict = {}
-    #     precipitation_dict["precipitation"] = prcp
-    #     precipitation_dict["date"] = date
-    #     precip.append(precipitation_dict)
 
     return jsonify(dict(precip))
 
@@ -100,33 +93,39 @@ def tobs():
     return jsonify(station1_list)
 
 # start
-@app.route("/api/v1.0/start")
-def temps():
-    session=Session(engine)
+# @app.route("/api/v1.0/<start>")
+# def temps(start):
+#     session=Session(engine)
 
-    # start = dt.date(2017, 1, 1)
-    start = dt.date(2017, 8, 23) - dt.timedelta(days=365)
-    start_query = session.query(func.min(measurement.tobs), func.max(measurement.tobs), func.avg(measurement.tobs)).\
-        filter(measurement.date >= start).all()
-    session.close()
+#     start_date= dt.datetime.strptime(start, '%Y-%m-%d')
+#     last_year = dt.timedelta(days=365)
+#     start = start_date-last_year
+#     end =  dt.date(2017, 8, 23)
+#     start_query = session.query(func.min(measurement.tobs), func.max(measurement.tobs), func.avg(measurement.tobs)).\
+#         filter(measurement.date >= start).filter(measurement.date <= end).all()
+#     session.close()
 
-    # start_query = []
-    tempobs={}
-    tempobs["min"]=start_query[0][0]
-    tempobs["max"]=start_query[0][1]
-    tempobs["avg"]=start_query[0][2]
+#     # start_query = []
+#     tempobs={}
+#     tempobs["min"]=start_query[0][0]
+#     tempobs["max"]=start_query[0][1]
+#     tempobs["avg"]=start_query[0][2]
 
-    return jsonify(tempobs)
+#     return jsonify(tempobs)
 
 # end
-@app.route("/api/v1.0/start/end")
-def year_data():
+@app.route("/api/v1.0/<start>")
+@app.route("/api/v1.0/<start>/<end>")
+def year_data(start=None, end=None):
     session = Session(engine)
 
-    start = dt.date(2016, 10, 23)
-    end = dt.date(2017, 8, 23)
+    start_date= dt.datetime.strptime(start, "%m%d%Y")
+    last_year = dt.timedelta(days=365)
+    start = start_date-last_year
+    end =  dt.date(2017, 8, 23)
+
     station1_data = session.query(func.min(measurement.tobs), func.max(measurement.tobs), func.avg(measurement.tobs)).\
-        filter(measurement.station=='USC00519281', measurement.date > start, measurement.date < end).\
+        filter(measurement.station=='USC00519281', measurement.date >= start, measurement.date <= end).\
         order_by(measurement.tobs).all()
 
     session.close()
